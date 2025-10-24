@@ -38,7 +38,7 @@ class MonarchCoordinator(DataUpdateCoordinator):
         self._hass = hass
         self._config_entry = config_entry
         session_dir_path = self._config_entry.data.get(CONF_SESSION_DIR_PATH, self._hass.config.path(".storage/monarchmoney"))
-        self._api = MonarchMoney(session_dir_path=session_dir_path)
+        self._api = MonarchMoney(session_file=session_dir_path)
         self._auth_lock = (
             asyncio.Lock()
         )  # Prevent concurrent re-authentication attempts
@@ -160,7 +160,7 @@ class MonarchCoordinator(DataUpdateCoordinator):
                     "Creating fresh MonarchMoney instance for re-authentication"
                 )
                 session_dir_path = self._config_entry.data.get(CONF_SESSION_DIR_PATH, self._hass.config.path(".storage/monarchmoney"))
-                fresh_api = MonarchMoney(session_dir_path=session_dir_path)
+                fresh_api = MonarchMoney(session_file=session_dir_path)
 
                 if mfa_secret and mfa_secret.strip():
                     _LOGGER.debug("Using stored MFA secret for authentication")

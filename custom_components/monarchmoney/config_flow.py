@@ -116,7 +116,7 @@ class MonarchConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _test_connection_and_set_token(self) -> None:
         """Test connection and save session token."""
         session_dir_path = self._user_input.get(CONF_SESSION_DIR_PATH, self.hass.config.path(".storage/monarchmoney"))
-        api = MonarchMoney(session_dir_path=session_dir_path)
+        api = MonarchMoney(session_file=session_dir_path)
 
         try:
             # Try login with MFA secret if provided
@@ -228,7 +228,7 @@ class MonarchConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Test MFA code and save session token."""
         try:
             session_dir_path = self._user_input.get(CONF_SESSION_DIR_PATH, self.hass.config.path(".storage/monarchmoney"))
-            api = MonarchMoney(session_dir_path=session_dir_path)
+            api = MonarchMoney(session_file=session_dir_path)
             await api.multi_factor_authenticate(
                 self._user_input[CONF_EMAIL],
                 self._user_input[CONF_PASSWORD],
