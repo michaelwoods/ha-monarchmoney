@@ -17,6 +17,7 @@ from monarchmoney import MonarchMoney, RequireMFAException, LoginFailedException
 from .const import (
     CONF_MFA_CODE,
     CONF_MFA_SECRET,
+    CONF_SESSION_DIR_PATH,
     CONF_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_TIMEOUT,
@@ -50,6 +51,9 @@ CREDENTIALS_SCHEMA = vol.Schema(
         vol.Required(CONF_PASSWORD): str,
         vol.Optional(
             CONF_MFA_SECRET, description="MFA Secret Key (Optional - for automatic MFA)"
+        ): str,
+        vol.Optional(
+            CONF_SESSION_DIR_PATH, description="Session Directory Path (Optional - defaults to config/.storage/monarchmoney)"
         ): str,
     }
 )
@@ -111,7 +115,8 @@ class MonarchConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _test_connection_and_set_token(self) -> None:
         """Test connection and save session token."""
-        api = MonarchMoney()
+        session_dir_path = self._user_input.get(CONF_SESSION_DIR_PATH, self.hass.config.path(".storage/monarchmoney"))
+        api = MonarchMoney(session_dir_path=session_dir_path)
 
         try:
             # Try login with MFA secret if provided
@@ -222,7 +227,8 @@ class MonarchConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _test_mfa_and_set_token(self) -> None:
         """Test MFA code and save session token."""
         try:
-            api = MonarchMoney()
+            session_dir_path = self._user_input.get(CONF_SESSION_DIR_PATH, self.hass.config.path(".storage/monarchmoney"))
+            api = MonarchMoney(session_dir_path=session_dir_path)
             await api.multi_factor_authenticate(
                 self._user_input[CONF_EMAIL],
                 self._user_input[CONF_PASSWORD],
@@ -305,6 +311,11 @@ class MonarchConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 # Remove MFA secret if it exists in current config
                 self._user_input.pop(CONF_MFA_SECRET, None)
+
+            if CONF_SESSION_DIR_PATH in user_input and user_input[CONF_SESSION_DIR_PATH].strip():
+                self._user_input[CONF_SESSION_DIR_PATH] = user_input[CONF_SESSION_DIR_PATH].strip()
+            else:
+                self._user_input.pop(CONF_SESSION_DIR_PATH, None)
 
         if self.unique_id is None:
             await self.async_set_unique_id(self._user_input[CONF_EMAIL])

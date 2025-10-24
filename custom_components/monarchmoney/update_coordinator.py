@@ -20,6 +20,7 @@ from monarchmoney import MonarchMoney, RequireMFAException
 
 from .const import (
     CONF_MFA_SECRET,
+    CONF_SESSION_DIR_PATH,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_TIMEOUT,
     DOMAIN,
@@ -36,7 +37,8 @@ class MonarchCoordinator(DataUpdateCoordinator):
         """Initialize the coordinator."""
         self._hass = hass
         self._config_entry = config_entry
-        self._api = MonarchMoney()
+        session_dir_path = self._config_entry.data.get(CONF_SESSION_DIR_PATH, self._hass.config.path(".storage/monarchmoney"))
+        self._api = MonarchMoney(session_dir_path=session_dir_path)
         self._auth_lock = (
             asyncio.Lock()
         )  # Prevent concurrent re-authentication attempts
@@ -157,7 +159,8 @@ class MonarchCoordinator(DataUpdateCoordinator):
                 _LOGGER.debug(
                     "Creating fresh MonarchMoney instance for re-authentication"
                 )
-                fresh_api = MonarchMoney()
+                session_dir_path = self._config_entry.data.get(CONF_SESSION_DIR_PATH, self._hass.config.path(".storage/monarchmoney"))
+                fresh_api = MonarchMoney(session_dir_path=session_dir_path)
 
                 if mfa_secret and mfa_secret.strip():
                     _LOGGER.debug("Using stored MFA secret for authentication")
